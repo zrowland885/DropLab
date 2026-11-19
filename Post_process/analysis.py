@@ -11,8 +11,9 @@ from droplab.aero_init import *
 from droplab.parcel import *
 from droplab.condensation import *
 from droplab.collision import *
+from droplab.q_ext import q_ext
  
-def ts_analysis(particles_list,air_mass_parcel,log_edges, nbins, n_particles,rho_parcel):
+def ts_analysis(particles_list, air_mass_parcel, log_edges, nbins, n_particles, rho_parcel, w_parcel, TAU_ts, dt):
     # Timesteps analysis: Performs calculations of q_x mixing ratios and n_x number densities and the spectra
     #
     # Mixing ratios (qc/qr/qa) stay mass-normalized (per kg dry air) -- physically
@@ -71,6 +72,8 @@ def ts_analysis(particles_list,air_mass_parcel,log_edges, nbins, n_particles,rho
         particles_r[particle.id] = r_liq
         # Apped the weighting factor of the current particle to the list
         particles_a[particle.id] = particle.A
+
+        TAU_ts = TAU_ts + q_ext(r_liq) * np.pi * r_liq**2 * particle.A / V_parcel * ( w_parcel * dt) # optical thickness
         
     # Weighted mean and standard deviation of radius for cloud droplets only
     particles_c_arr = np.array(particles_c)
@@ -110,7 +113,7 @@ def ts_analysis(particles_list,air_mass_parcel,log_edges, nbins, n_particles,rho
     #   r_liq_avg, r_liq_std  = all-droplet weighted mean/std radius
     #   particles_rc          = id-indexed cloud+rain radii (0 for haze)
     return(spec,qa, qc,qr, NA, NC, NR, particles_r, rc_liq_avg, rc_liq_std,
-           r_liq_avg, r_liq_std, particles_rc)
+           r_liq_avg, r_liq_std, particles_rc, TAU_ts)
 
 def get_spec(nbins,spectra_arr,log_edges,r_liq,weight_factor,V_parcel):
     # Computes array of the spectra (number density per unit VOLUME, not mass)

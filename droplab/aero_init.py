@@ -6,40 +6,49 @@ from droplab.parcel import *
 from droplab.condensation import *
 from Post_process.print_plot import *
 
-
-def model_init(dt_widget, nt_widget, Condensation_widget, Collision_widget, n_particles_widget, T_widget, P_widget, RH_widget, w_widget, z_widget, max_z_widget, mode_aero_init_widget, gridwidget, ascending_mode_widget, mode_displaytype_widget, switch_kappa_koehler):
+def model_init(
+    dt, nt, do_condensation, do_collision,
+    n_particles, T_parcel, P_parcel, RH_parcel, w_parcel, z_parcel, max_z,
+    mode_aero_init, N_aero, mu_aero, sigma_aero, k_aero,
+    ascending_mode, display_mode, switch_kappa_koehler
+    ):
     # Data of the model steering parameters is being read out from the widgets.
     # Values necessary for the model initialization will be returned.
     
     # Model steering parameters
-    dt = dt_widget.value # Default: 0.5 s
-    nt = nt_widget.value # Default: 3600
+    # dt = dt_widget.value # Default: 0.5 s
+    # nt = nt_widget.value # Default: 3600
 
-    do_condensation = Condensation_widget.value  # Default: True
-    do_collision    = Collision_widget.value  # Default: False
+    # do_condensation = Condensation_widget.value  # Default: True
+    # do_collision    = Collision_widget.value  # Default: False
 
-    n_particles = n_particles_widget.value
+    # n_particles = n_particles_widget.value
 
     # Parcel initial parameters
-    T_parcel   = T_widget.value
-    P_parcel   = P_widget.value
-    RH_parcel  = RH_widget.value
-    w_parcel   = w_widget.value
-    z_parcel   = z_widget.value
+    # T_parcel   = T_widget.value
+    # P_parcel   = P_widget.value
+    # RH_parcel  = RH_widget.value
+    # w_parcel   = w_widget.value
+    # z_parcel   = z_widget.value
 
     # RH to q conversion
-    q_parcel    = RH_parcel * esatw( T_parcel ) / ( P_parcel - RH_parcel * esatw( T_parcel ) ) * r_a / rv
+    q_parcel = RH_parcel * esatw( T_parcel ) / ( P_parcel - RH_parcel * esatw( T_parcel ) ) * r_a / rv
+
+    print('test')
+    print(q_parcel)
         
-    max_z = max_z_widget.value
+    # max_z = max_z_widget.value
     
     # Aerosol initialization
-    mode_aero_init = mode_aero_init_widget.value  # Possible values are: "weighting_factor", 'random'
+    # mode_aero_init = mode_aero_init_widget.value  # Possible values are: "weighting_factor", 'random'
 
     # Read in the variables given above taking into account unit factors.
-    N_aero     = [gridwidget[1, 0].value*1.0E6, gridwidget[1, 1].value*1.0E6, gridwidget[1, 2].value*1.0E6, gridwidget[1, 3].value*1.0E6]
-    mu_aero    = [gridwidget[2, 0].value*1.0E-6, gridwidget[2, 1].value*1.0E-6, gridwidget[2, 2].value*1.0E-6, gridwidget[2, 3].value*1.0E-6]
-    sigma_aero = [gridwidget[3, 0].value, gridwidget[3, 1].value, gridwidget[3, 2].value, gridwidget[3, 3].value]
-    k_aero     = [gridwidget[4, 0].value, gridwidget[4, 1].value, gridwidget[4, 2].value, gridwidget[4, 3].value]
+    # N_aero     = [gridwidget[1, 0].value*1.0E6, gridwidget[1, 1].value*1.0E6, gridwidget[1, 2].value*1.0E6, gridwidget[1, 3].value*1.0E6]
+    # mu_aero    = [gridwidget[2, 0].value*1.0E-6, gridwidget[2, 1].value*1.0E-6, gridwidget[2, 2].value*1.0E-6, gridwidget[2, 3].value*1.0E-6]
+    # sigma_aero = [gridwidget[3, 0].value, gridwidget[3, 1].value, gridwidget[3, 2].value, gridwidget[3, 3].value]
+    # k_aero     = [gridwidget[4, 0].value, gridwidget[4, 1].value, gridwidget[4, 2].value, gridwidget[4, 3].value]
+    
+    
     # Truncate the array before taking the log if one of the N_aero_i is 0, which means that this mode will no longer be used.
     N_aero_array = np.array(N_aero) # First: Convert into np.array
     zeroindices  = np.where(N_aero_array==0) # Get the number of the mode which is empty
@@ -66,11 +75,11 @@ def model_init(dt_widget, nt_widget, Condensation_widget, Collision_widget, n_pa
     sigma_aero = sigma_aero_array
     
     # Further initialization
-    dz=0
-    rho_parcel, V_parcel, air_mass_parcel =  parcel_rho(P_parcel, T_parcel)
+    dz = 0
+    rho_parcel, V_parcel, air_mass_parcel = parcel_rho(P_parcel, T_parcel)
     
     # Aerosol initialization
-    T_parcel, q_parcel, particles_list = aero_init(mode_aero_init, n_particles, P_parcel,z_parcel, T_parcel,q_parcel, N_aero, mu_aero, sigma_aero, rho_aero, k_aero, switch_kappa_koehler)
+    T_parcel, q_parcel, particles_list = aero_init(mode_aero_init, n_particles, P_parcel,z_parcel, T_parcel, q_parcel, N_aero, mu_aero, sigma_aero, rho_aero, k_aero, switch_kappa_koehler)
     
     # Variant for mean radii and std. dev. of cloud+rain droplets only
     rc_liq_avg_array = np.zeros(nt+1)
@@ -78,6 +87,9 @@ def model_init(dt_widget, nt_widget, Condensation_widget, Collision_widget, n_pa
     # All-droplet (haze included) weighted mean/std radius, complementing the cloud-only rc_ arrays
     r_liq_avg_array = np.zeros(nt+1)
     r_liq_std_array = np.zeros(nt+1)
+
+    # Optical thickness
+    TAU_ts_array = np.zeros(nt+1)
 
     # Initialize array for all radii of particles for plot of their time evolution
     particles_array = np.zeros((nt+1, len(particles_list)))
@@ -92,7 +104,7 @@ def model_init(dt_widget, nt_widget, Condensation_widget, Collision_widget, n_pa
     na_ts,nc_ts,nr_ts = np.zeros(nt+1),np.zeros(nt+1),np.zeros(nt+1)
     con_ts, act_ts, evp_ts, dea_ts = np.zeros(nt+1),np.zeros(nt+1),np.zeros(nt+1),np.zeros(nt+1)
     acc_ts, aut_ts, precip_ts = np.zeros(nt+1),np.zeros(nt+1), np.zeros(nt+1)
-    spectra_arr[0],qa_ts[0], qc_ts[0],qr_ts[0], na_ts[0], nc_ts[0], nr_ts[0], particles_array[0], rc_liq_avg_array[0], rc_liq_std_array[0], r_liq_avg_array[0], r_liq_std_array[0], particles_c_array[0] = ts_analysis(particles_list,air_mass_parcel,rm_spec, n_bins,n_particles,rho_parcel)
+    spectra_arr[0], qa_ts[0], qc_ts[0],qr_ts[0], na_ts[0], nc_ts[0], nr_ts[0], particles_array[0], rc_liq_avg_array[0], rc_liq_std_array[0], r_liq_avg_array[0], r_liq_std_array[0], particles_c_array[0], TAU_ts_array[0] = ts_analysis(particles_list, air_mass_parcel, rm_spec, n_bins, n_particles, rho_parcel, w_parcel, TAU_ts_array[0], dt)
     
     # Initialization of arrays for T_parcel, RH_parcel, q_parcel and z_parcel. 
     # They will later be filled with values for each time step.
@@ -101,25 +113,42 @@ def model_init(dt_widget, nt_widget, Condensation_widget, Collision_widget, n_pa
     q_parcel_array  = np.zeros(nt+1)
     z_parcel_array  = np.zeros(nt+1)
 
+    P_parcel_array = np.zeros(nt+1)
+
     # Inserting the initialization values at the 0th position of the arrays.
     T_parcel_array[0]  = T_parcel
     RH_parcel_array[0] = (q_parcel * P_parcel / (q_parcel + r_a / rv)) / esatw( T_parcel ) 
     q_parcel_array[0]  = q_parcel
     z_parcel_array[0]  = z_parcel
+
+    P_parcel_array[0] = P_parcel
     
     # Read in the ascending mode selected in the widget
-    ascending_mode=ascending_mode_widget.value
+    # ascending_mode=ascending_mode_widget.value
     # Settings for the 'sine' and the 'in_cloud_oscillation' modes: time half wavelength of the parcel (s)
     time_half_wave_parcel = 600.0  # This value can be adapted by the user
 
     S_lst = 0.0
     
     # Read in selected display mode (options are: 'text_fast' or 'graphics')
-    display_mode = mode_displaytype_widget.value
-    
-    return P_parcel, T_parcel, q_parcel, z_parcel, w_parcel, N_aero, mu_aero, sigma_aero, nt, dt, max_z, do_condensation, do_collision, ascending_mode, time_half_wave_parcel, S_lst, display_mode, qa_ts, qc_ts, qr_ts, na_ts, nc_ts, nr_ts, T_parcel_array, RH_parcel_array, q_parcel_array, z_parcel_array, particles_list, spectra_arr, con_ts, act_ts, evp_ts, dea_ts, acc_ts, aut_ts, precip_ts, particles_array, rc_liq_avg_array, rc_liq_std_array, r_liq_avg_array, r_liq_std_array, particles_c_array, n_particles
+    # display_mode = mode_displaytype_widget.value
 
-def aero_init(mode_aero_init, n_ptcl, P_parcel, z_parcel,T_parcel,q_parcel, N_aero, mu_aero,sigma_aero,rho_aero, k_aero, switch_kappa_koehler):
+    print('test')
+    print(q_parcel)
+
+    return \
+        P_parcel, T_parcel, q_parcel, z_parcel, w_parcel, N_aero, mu_aero, sigma_aero, nt, dt, \
+        max_z, do_condensation, do_collision, ascending_mode, time_half_wave_parcel, S_lst, display_mode, \
+        qa_ts, qc_ts, qr_ts, na_ts, nc_ts, nr_ts, \
+        T_parcel_array, P_parcel_array, RH_parcel_array, q_parcel_array, \
+        z_parcel_array, particles_list, spectra_arr, \
+        con_ts, act_ts, evp_ts, dea_ts, acc_ts, aut_ts, precip_ts, \
+        particles_array, rc_liq_avg_array, rc_liq_std_array, r_liq_avg_array, r_liq_std_array, \
+        particles_c_array, n_particles, \
+        TAU_ts_array
+
+
+def aero_init(mode_aero_init, n_ptcl, P_parcel, z_parcel, T_parcel, q_parcel, N_aero, mu_aero, sigma_aero, rho_aero, k_aero, switch_kappa_koehler):
     
     # Aerosol initialization
     rho_parcel, V_parcel, air_mass_parcel =  parcel_rho(P_parcel, T_parcel)
